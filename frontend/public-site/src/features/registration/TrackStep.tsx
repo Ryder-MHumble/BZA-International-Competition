@@ -1,4 +1,5 @@
 import { countryCodes, displayCountryCode } from './constants';
+import { SelectField } from './SelectField';
 import type { FormState, Locale } from './types';
 
 type Props = {
@@ -39,6 +40,7 @@ const text = {
 
 export function TrackStep({ form, locale, errorField, update }: Props) {
   const t = text[locale];
+  const countryCodeOptions = countryCodes.map((option) => ({ value: option[0], label: displayCountryCode(option, locale) }));
 
   function updateSchool(value: string) {
     update('school', value);
@@ -57,7 +59,7 @@ export function TrackStep({ form, locale, errorField, update }: Props) {
       <label className={errorField === 'gradeClass' ? 'field-error' : ''}>{t.grade}<input name="gradeClass" value={form.gradeClass} onChange={(e) => update('gradeClass', e.target.value)} placeholder={t.gradePh} required /></label>
       <label className={errorField === 'supervisingOrganization' ? 'field-error wide org-field' : 'wide org-field'}>{t.org}<input name="supervisingOrganization" value={form.organizationSameAsSchool ? form.school : form.supervisingOrganization} onChange={(e) => update('supervisingOrganization', e.target.value)} disabled={form.organizationSameAsSchool} required={!form.organizationSameAsSchool} /><span className="inline-check"><input type="checkbox" checked={form.organizationSameAsSchool} onChange={(e) => toggleSame(e.target.checked)} />{t.same}</span></label>
       <label className={errorField === 'teacherName' ? 'field-error' : ''}>{t.teacher}<input name="teacherName" value={form.teacherName} onChange={(e) => update('teacherName', e.target.value)} required /></label>
-      <div className={errorField === 'teacherPhone' ? 'phone-field field-error' : 'phone-field'}><span>{t.phone}</span><div><select value={form.teacherCountryCode} onChange={(e) => update('teacherCountryCode', e.target.value)}>{countryCodes.map((option) => <option key={option[0]} value={option[0]}>{displayCountryCode(option, locale)}</option>)}</select><input name="teacherPhone" value={form.teacherPhone} onChange={(e) => update('teacherPhone', e.target.value)} placeholder="13800000000" required /></div></div>
+      <div className={errorField === 'teacherPhone' ? 'phone-field field-error' : 'phone-field'}><span>{t.phone}</span><div><SelectField name="teacherCountryCode" value={form.teacherCountryCode} options={countryCodeOptions} onChange={(value) => update('teacherCountryCode', value)} /><input name="teacherPhone" value={form.teacherPhone} onChange={(e) => update('teacherPhone', e.target.value)} placeholder="13800000000" required /></div></div>
       <label className={errorField === 'teacherEmail' ? 'field-error' : ''}>{t.email}<input name="teacherEmail" type="email" value={form.teacherEmail} onChange={(e) => update('teacherEmail', e.target.value)} placeholder="teacher@example.com" /></label>
     </div>
   </div>;

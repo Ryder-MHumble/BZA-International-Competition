@@ -10,6 +10,7 @@ const DB_PATH = resolve(DATA_DIR, 'dev-db.json');
 const CATALOG_PATH = resolve(DATA_DIR, 'catalog.json');
 const EMAIL_TEMPLATE_PATH = resolve(ROOT, 'templates/registration-success-email.txt');
 const PORT = Number(process.env.API_PORT || 3000);
+const HOST = process.env.HOST || '127.0.0.1';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'local-admin-token';
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
@@ -415,7 +416,7 @@ export async function handleRequest(req, res) {
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
   await ensureFiles();
-  http.createServer(handleRequest).listen(PORT, () => {
-    console.log(`Local JSON API running at http://localhost:${PORT}`);
+  http.createServer(handleRequest).listen(PORT, HOST, () => {
+    console.log(`Local JSON API running at http://${HOST}:${PORT}`);
   });
 }

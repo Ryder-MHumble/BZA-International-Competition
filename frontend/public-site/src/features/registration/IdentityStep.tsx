@@ -1,4 +1,5 @@
 import { defaultDocumentType, documentLabels, documentNumberLabels, documentOptionsByRegion, nationalityOptions } from './constants';
+import { SelectField } from './SelectField';
 import type { DocumentType, FormState, Locale, NationalityRegion } from './types';
 
 type Props = {
@@ -11,7 +12,7 @@ type Props = {
 const text = {
   'zh-CN': {
     title: '身份信息',
-    helper: '证件类型会根据国籍/地区自动联动；当前 PRD 版本只校验出生日期格式，不做年龄限制。',
+    helper: '证件类型会根据国籍/地区自动联动；当前只校验出生日期格式，不做年龄限制。',
     name: '选手姓名',
     nameHint: '中国籍学生填写中文全名；国际学生填写护照英文全名。',
     gender: '性别',
@@ -26,7 +27,7 @@ const text = {
   },
   en: {
     title: 'Profile',
-    helper: 'Document type follows nationality/region. This PRD version validates date format only and does not run age checks.',
+    helper: 'Document type follows nationality/region. This version validates date format only and does not run age checks.',
     name: 'Participant Name',
     nameHint: 'Mainland China, Hong Kong, Macao or Taiwan students enter legal full name; international students enter passport English name.',
     gender: 'Gender',
@@ -44,6 +45,12 @@ const text = {
 export function IdentityStep({ form, locale, errorField, update }: Props) {
   const t = text[locale];
   const documentOptions = documentOptionsByRegion[form.nationalityRegion];
+  const genderOptions = [
+    { value: '' as FormState['gender'], label: '--' },
+    { value: 'male' as FormState['gender'], label: t.male },
+    { value: 'female' as FormState['gender'], label: t.female }
+  ];
+  const regionOptions = nationalityOptions.map(([value, zh, en]) => ({ value, label: locale === 'zh-CN' ? zh : en }));
 
   function setRegion(value: NationalityRegion) {
     update('nationalityRegion', value);
@@ -55,8 +62,8 @@ export function IdentityStep({ form, locale, errorField, update }: Props) {
     <div className="panel-heading"><span>01</span><h3>{t.title}</h3><p>{t.helper}</p></div>
     <div className="grid two">
       <label className={errorField === 'studentName' ? 'field-error' : ''}>{t.name}<input name="studentName" value={form.studentName} onChange={(e) => update('studentName', e.target.value)} placeholder={t.placeholderName} required /><small>{t.nameHint}</small></label>
-      <label className={errorField === 'gender' ? 'field-error' : ''}>{t.gender}<select name="gender" value={form.gender} onChange={(e) => update('gender', e.target.value as FormState['gender'])} required><option value="">--</option><option value="male">{t.male}</option><option value="female">{t.female}</option></select></label>
-      <label className={errorField === 'nationalityRegion' ? 'field-error' : ''}>{t.region}<select name="nationalityRegion" value={form.nationalityRegion} onChange={(e) => setRegion(e.target.value as NationalityRegion)} required>{nationalityOptions.map(([value, zh, en]) => <option key={value} value={value}>{locale === 'zh-CN' ? zh : en}</option>)}</select></label>
+      <label className={errorField === 'gender' ? 'field-error' : ''}>{t.gender}<SelectField name="gender" value={form.gender} options={genderOptions} onChange={(value) => update('gender', value)} /></label>
+      <label className={errorField === 'nationalityRegion' ? 'field-error' : ''}>{t.region}<SelectField name="nationalityRegion" value={form.nationalityRegion} options={regionOptions} onChange={setRegion} /></label>
       <label className={errorField === 'birthDate' ? 'field-error' : ''}>{t.birthDate}<input name="birthDate" value={form.birthDate} onChange={(e) => update('birthDate', e.target.value)} placeholder="yyyy/mm/dd" required /><small>{t.birthHint}</small></label>
       <div className={errorField === 'documentType' ? 'document-switch field-error wide' : 'document-switch wide'}>
         <span>{t.docType}</span>

@@ -1,4 +1,5 @@
 import { materialKindLabels, techStackOptions } from './constants';
+import { SelectField } from './SelectField';
 import type { FormState, Locale, MaterialKind, PreviewMaterial } from './types';
 
 type Props = {
@@ -55,6 +56,7 @@ const text = {
 
 export function MaterialsStep({ form, locale, previews, errorField, update, updateMaterial, addMaterial, removeMaterial }: Props) {
   const t = text[locale];
+  const materialKindOptions = Object.keys(materialKindLabels).map((kind) => ({ value: kind as MaterialKind, label: materialKindLabels[kind][locale] }));
 
   function toggleStack(value: string) {
     update('techStack', form.techStack.includes(value) ? form.techStack.filter((item) => item !== value) : [...form.techStack, value]);
@@ -72,7 +74,7 @@ export function MaterialsStep({ form, locale, previews, errorField, update, upda
       {form.materials.map((item, index) => <div key={index} className="material-editor">
         <div className="grid three">
           <label>{t.titleField}<input name={`materials.${index}.title`} value={item.title} onChange={(e) => updateMaterial(index, { title: e.target.value })} placeholder={locale === 'zh-CN' ? '项目演示 / 代码仓库' : 'Demo / Repository'} /></label>
-          <label>{t.kind}<select value={item.kind} onChange={(e) => updateMaterial(index, { kind: e.target.value as MaterialKind })}>{Object.keys(materialKindLabels).map((kind) => <option key={kind} value={kind}>{materialKindLabels[kind][locale]}</option>)}</select></label>
+          <label>{t.kind}<SelectField value={item.kind} options={materialKindOptions} onChange={(value) => updateMaterial(index, { kind: value })} /></label>
           <label>{t.url}<input name={`materials.${index}.url`} value={item.url} onChange={(e) => updateMaterial(index, { url: e.target.value })} placeholder="https://..." /></label>
           <label className="wide">{t.desc}<input value={item.description || ''} onChange={(e) => updateMaterial(index, { description: e.target.value })} placeholder={locale === 'zh-CN' ? '一句话说明这个链接里有什么' : 'One sentence about what reviewers will see'} /></label>
         </div>
