@@ -1,0 +1,17 @@
+Subject: 国际少年AI未来峰会报名已提交 / Registration Received
+
+你好，{{studentName}} 同学：
+
+我们已收到你提交的「国际少年AI未来峰会」报名信息，当前状态为：{{status}}。
+
+报名编号：{{registrationId}}
+报名项目：{{trackName}}
+就读学校：{{school}}
+带队教师：{{teacherName}}
+提交时间：{{submittedAt}}
+
+请保存报名编号，并留意确认邮件与后续通知。如需补充材料或沟通，组委会将通过报名邮箱或带队教师联系方式联系你。
+
+如有问题，请联系：{{contactEmail}}
+
+International Youth AI Future Summit Organizing Team

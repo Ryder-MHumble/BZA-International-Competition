@@ -1,0 +1,25 @@
+{
+  "name": "beijing-youth-ai-registration-site",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Front/back-end separated local prototype for the Beijing Youth AI Academy international AI challenge registration website.",
+  "workspaces": [
+    "frontend/public-site",
+    "frontend/admin-console",
+    "frontend/shared-ui",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=@ai-registration/backend",
+    "dev:public": "npm run dev --workspace=@ai-registration/public-site",
+    "dev:admin": "npm run dev --workspace=@ai-registration/admin-console",
+    "build": "npm run build --workspace=@ai-registration/shared && npm run build --workspace=@ai-registration/public-site && npm run build --workspace=@ai-registration/admin-console",
+    "test:backend": "npm run test --workspace=@ai-registration/backend",
+    "check:structure": "sh scripts/check_structure.sh",
+    "verify": "npm run check:structure && npm run test:backend && npm run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

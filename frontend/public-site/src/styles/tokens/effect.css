@@ -1,0 +1,11 @@
+:root {
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-full: 999px;
+  --shadow-soft: 0 8px 32px rgba(74, 125, 255, 0.08);
+  --shadow-float: 0 16px 48px rgba(42, 46, 58, 0.10);
+  --shadow-glow: 0 0 40px rgba(95, 227, 208, 0.35);
+  --blur-nav: blur(20px) saturate(180%);
+  --blur-overlay: blur(32px) saturate(160%);
+}

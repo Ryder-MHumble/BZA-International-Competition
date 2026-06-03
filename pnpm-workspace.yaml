@@ -1,0 +1,6 @@
+packages:
+  - frontend/public-site
+  - frontend/admin-console
+  - frontend/shared-ui
+  - backend
+  - shared

@@ -1,0 +1,69 @@
+openapi: 3.1.0
+info:
+  title: Beijing Youth AI Academy Registration API
+  version: 0.1.0
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+  /api/v1/public/season/current:
+    get:
+      summary: Current competition season and registration state
+      responses:
+        '200':
+          description: Current season bootstrap data
+  /api/v1/public/tracks:
+    get:
+      summary: Public competition tracks
+      responses:
+        '200':
+          description: Enabled tracks for the current season
+  /api/v1/public/registrations:
+    post:
+      summary: Create registration
+      responses:
+        '201':
+          description: Registration created
+        '400':
+          description: Validation error
+        '409':
+          description: Duplicate or closed registration conflict
+  /api/v1/admin/registrations:
+    get:
+      summary: List registrations for admins
+      responses:
+        '200':
+          description: Paginated registrations
+  /api/v1/admin/registrations/{id}:
+    get:
+      summary: Read registration detail
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Registration detail
+  /api/v1/admin/registrations/{id}/status:
+    patch:
+      summary: Update registration status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status updated
+  /api/v1/admin/registrations/export:
+    post:
+      summary: Export registrations
+      responses:
+        '200':
+          description: CSV or spreadsheet export

@@ -1,0 +1,17 @@
+:root {
+  --font-serif-en: 'Migra', 'Editorial New', serif;
+  --font-serif-cn: 'Source Han Serif SC', serif;
+  --font-sans-en: 'Neue Haas Grotesk', 'Suisse Intl', sans-serif;
+  --font-sans-cn: 'PingFang SC', 'Source Han Sans SC', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --fs-display: clamp(64px, 11vw, 160px);
+  --fs-h1: clamp(48px, 6vw, 96px);
+  --fs-h2: clamp(36px, 4vw, 64px);
+  --fs-h3: 28px;
+  --fs-body-lg: 20px;
+  --fs-body: 16px;
+  --fs-caption: 13px;
+  --fs-mono: 14px;
+  --ls-display: -0.03em;
+  --ls-caption: 0.08em;
+}

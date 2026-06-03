@@ -1,0 +1,21 @@
+{
+  "season": {
+    "code": "iy-ai-future-summit-2026",
+    "nameZh": "国际少年AI未来峰会",
+    "nameEn": "International Youth AI Future Summit",
+    "registrationOpen": true,
+    "ageRange": { "min": 13, "max": 16, "validation": "prd-current-version-disabled" },
+    "privacyConsentVersion": "2026-prd-v1",
+    "contactEmail": "xxxx"
+  },
+  "activities": [
+    { "code": "opening-project-expo", "titleZh": "开幕式 & 项目路演", "titleEn": "Opening & Project Expo", "summaryZh": "看见全球少年 AI 项目，与优秀同龄人快速建立连接。", "summaryEn": "Discover youth AI projects and quickly connect with outstanding peers worldwide." },
+    { "code": "individual-master", "titleZh": "个人大师赛", "titleEn": "Individual Master Challenge", "summaryZh": "硬核个人赛，检验 AI4Science 与 AI+Math 能力。", "summaryEn": "A rigorous individual challenge testing AI4Science and AI+Math capabilities." },
+    { "code": "team-creative", "titleZh": "团体创意赛", "titleEn": "Team Creative Challenge", "summaryZh": "跨文化协作，共同为真实问题寻求可落地的解法。", "summaryEn": "Collaborate across cultures to seek practical solutions to real-world problems." },
+    { "code": "future-roundtable", "titleZh": "AI未来报告与少年智库圆桌", "titleEn": "AI Future Report & Youth Think Tank Roundtable", "summaryZh": "不仅写代码，也要讨论 AI 与未来文明。", "summaryEn": "Beyond coding, students also discuss AI and future civilization." },
+    { "code": "closing", "titleZh": "闭幕式", "titleEn": "Closing Ceremony", "summaryZh": "集中展示成果，颁发个人与团队奖项。", "summaryEn": "Showcase outcomes and present individual and team awards." }
+  ],
+  "tracks": [
+    { "code": "future-summit", "nameZh": "国际少年AI未来峰会", "nameEn": "International Youth AI Future Summit", "summaryZh": "PRD 当前版本为峰会统一报名，不要求选手在表单中选择赛道。", "summaryEn": "The current PRD uses one unified summit registration and does not ask participants to select a track.", "enabled": true }
+  ]
+}

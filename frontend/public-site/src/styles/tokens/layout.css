@@ -1,0 +1,9 @@
+:root {
+  --z-webgl: 0;
+  --z-content: 1;
+  --z-nav: 10;
+  --z-overlay: 30;
+  --z-toast: 40;
+  --breakpoint-mobile: 768px;
+  --breakpoint-tablet: 1200px;
+}
