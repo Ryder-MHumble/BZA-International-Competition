@@ -368,6 +368,7 @@ function App() {
   const [toast, setToast] = useState("");
   const [showBurst, setShowBurst] = useState(false);
   const [showOpening, setShowOpening] = useState(true);
+  const [openingExiting, setOpeningExiting] = useState(false);
   const [openingSlide, setOpeningSlide] = useState(0);
   const [activeId, setActiveId] = useState("about");
   const [navScrolled, setNavScrolled] = useState(false);
@@ -375,7 +376,7 @@ function App() {
   const [activeActivity, setActiveActivity] = useState<number | null>(null);
   const [faqQuery, setFaqQuery] = useState("");
   const [openFaq, setOpenFaq] = useState(0);
-  const [activeScene, setActiveScene] = useState("aurora");
+  const activeSceneRef = React.useRef("aurora");
   const sceneShiftRef = React.useRef<ReturnType<typeof setTimeout>>();
   const t = copy[locale];
   const openingSlides = t.openingSlides;
@@ -397,23 +398,37 @@ function App() {
   }, [faqQuery, locale]);
 
   useEffect(() => {
-    if (!showOpening) return;
+    if (!showOpening || openingExiting) return;
     const timer = window.setTimeout(() => {
       setOpeningSlide((current) => {
         if (current >= openingSlides.length - 1) {
-          window.setTimeout(() => setShowOpening(false), 420);
+          window.setTimeout(() => setOpeningExiting(true), 420);
           return current;
         }
         return current + 1;
       });
     }, 3100);
     return () => window.clearTimeout(timer);
-  }, [openingSlide, openingSlides.length, showOpening]);
+  }, [openingExiting, openingSlide, openingSlides.length, showOpening]);
+
+  useEffect(() => {
+    if (!openingExiting) return;
+    const timer = window.setTimeout(() => {
+      setShowOpening(false);
+      setOpeningExiting(false);
+    }, 560);
+    return () => window.clearTimeout(timer);
+  }, [openingExiting]);
 
   useEffect(() => {
     document.body.classList.toggle("opening-lock", showOpening);
     return () => document.body.classList.remove("opening-lock");
   }, [showOpening]);
+
+  useEffect(() => {
+    document.body.classList.toggle("opening-unveiling", openingExiting);
+    return () => document.body.classList.remove("opening-unveiling");
+  }, [openingExiting]);
 
   useEffect(() => {
     if (!showOpening) return;
@@ -451,6 +466,7 @@ function App() {
     const root = document.documentElement;
     const body = document.body;
     let raf = 0;
+    body.dataset.scene = activeSceneRef.current;
     const updateScrollState = () => {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       const pageProgress =
@@ -521,8 +537,8 @@ function App() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible?.target instanceof HTMLElement) {
           const scene = visible.target.dataset.scene;
-          if (scene && scene !== activeScene) {
-            setActiveScene(scene);
+          if (scene && scene !== activeSceneRef.current) {
+            activeSceneRef.current = scene;
             body.dataset.scene = scene;
             body.classList.add("scene-shifting");
             clearTimeout(sceneShiftRef.current);
@@ -600,6 +616,10 @@ function App() {
     setOpeningSlide((current) =>
       Math.min(openingSlides.length - 1, Math.max(0, current + direction)),
     );
+  }
+
+  function closeOpening() {
+    setOpeningExiting(true);
   }
 
   function goNext() {
@@ -740,7 +760,10 @@ function App() {
       </Suspense>
       <div className="grain" aria-hidden="true" />
       {showOpening && (
-        <section className="opening" aria-label={t.openingProgress}>
+        <section
+          className={openingExiting ? "opening opening--exiting" : "opening"}
+          aria-label={t.openingProgress}
+        >
           <div
             className="opening-track"
             style={{ transform: `translateX(${-openingSlide * 100}%)` }}
@@ -795,7 +818,7 @@ function App() {
                 <button
                   type="button"
                   className="primary-btn"
-                  onClick={() => setShowOpening(false)}
+                  onClick={closeOpening}
                 >
                   {t.openingEnter}
                 </button>
@@ -803,7 +826,7 @@ function App() {
               <button
                 type="button"
                 className="opening-skip"
-                onClick={() => setShowOpening(false)}
+                onClick={closeOpening}
               >
                 {t.openingSkip}
               </button>
@@ -1013,209 +1036,249 @@ function App() {
           </div>
         </section>
 
-        <section
-          id="register"
-          className="section registration scrub"
-          data-step={step}
-          data-scene="shaft"
-        >
-          <div className="form-shell reveal">
-            <aside className="step-column" aria-label="Registration steps">
-              <p className="section-kicker">{t.formKicker}</p>
-              <h2>{t.formTitle}</h2>
-              <p className="draft-notice">{t.draft}</p>
-              <ol className="step-list">
-                {t.stepLabels.map((label, index) => (
-                  <li
-                    key={label}
-                    className={
-                      index === step
-                        ? "active"
-                        : index < step
-                          ? "done"
-                          : index <= furthestStep
-                            ? "ready"
-                            : "locked"
-                    }
-                  >
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <strong>{label}</strong>
-                  </li>
-                ))}
-              </ol>
-              <button
-                type="button"
-                className="reset-draft"
-                onClick={resetDraft}
-              >
-                {t.resetDraft}
-              </button>
-            </aside>
-            <form className="signup-form" onSubmit={submit} noValidate>
-              <div className="step-rail" aria-label="Registration steps">
-                {t.stepShort.map((label, index) => (
-                  <button
-                    type="button"
-                    className={
-                      step === index
-                        ? "active"
-                        : index < step
-                          ? "done"
-                          : index <= furthestStep
-                            ? "ready"
-                            : "locked"
-                    }
-                    onClick={() => jumpStep(index)}
-                    key={label}
-                    disabled={index > furthestStep && index > step}
-                  >
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <div className="progress">
-                <span>{t.progress}</span>
-                <i style={{ width: `${progress}%` }} />
-              </div>
-              {submission ? (
-                <SuccessPanel
-                  locale={locale}
-                  form={form}
-                  submission={submission}
-                  toast={toast}
-                  copyId={copyRegistrationId}
-                  resetDraft={resetDraft}
-                />
-              ) : (
-                <>
-                  {step === 0 && (
-                    <IdentityStep
-                      form={form}
-                      locale={locale}
-                      errorField={stepError?.field}
-                      update={update}
-                    />
-                  )}
-                  {step === 1 && (
-                    <TrackStep
-                      form={form}
-                      locale={locale}
-                      errorField={stepError?.field}
-                      update={update}
-                    />
-                  )}
-                  {step === 2 && (
-                    <ContactStep
-                      form={form}
-                      locale={locale}
-                      errorField={stepError?.field}
-                      update={update}
-                    />
-                  )}
-                  {step === 3 && (
-                    <MaterialsStep
-                      form={form}
-                      locale={locale}
-                      previews={previews}
-                      errorField={stepError?.field}
-                      update={update}
-                      updateMaterial={updateMaterial}
-                      addMaterial={addMaterial}
-                      removeMaterial={removeMaterial}
-                    />
-                  )}
-                  {step === 4 && (
-                    <ConfirmStep
-                      form={form}
-                      locale={locale}
-                      errorField={stepError?.field}
-                      error={
-                        stepError?.field === "submit" ? stepError.message : ""
+        <div className="night-flow">
+          <section
+            id="register"
+            className="section registration scrub"
+            data-step={step}
+            data-scene="shaft"
+          >
+            <div className="form-shell reveal">
+              <aside className="step-column" aria-label="Registration steps">
+                <p className="section-kicker">{t.formKicker}</p>
+                <h2>{t.formTitle}</h2>
+                <p className="draft-notice">{t.draft}</p>
+                <ol className="step-list">
+                  {t.stepLabels.map((label, index) => (
+                    <li
+                      key={label}
+                      className={
+                        index === step
+                          ? "active"
+                          : index < step
+                            ? "done"
+                            : index <= furthestStep
+                              ? "ready"
+                              : "locked"
                       }
-                      update={update}
-                      jumpTo={(target) => {
-                        setFurthestStep(4);
-                        setStep(target);
-                      }}
-                    />
-                  )}
-                  {stepError && stepError.field !== "submit" && (
-                    <p className="error form-error" role="alert">
-                      {stepError.message}
-                    </p>
-                  )}
-                  <div className="form-actions">
+                    >
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <strong>{label}</strong>
+                    </li>
+                  ))}
+                </ol>
+                <button
+                  type="button"
+                  className="reset-draft"
+                  onClick={resetDraft}
+                >
+                  {t.resetDraft}
+                </button>
+              </aside>
+              <form className="signup-form" onSubmit={submit} noValidate>
+                <div className="step-rail" aria-label="Registration steps">
+                  {t.stepShort.map((label, index) => (
                     <button
                       type="button"
-                      className="ghost-btn"
-                      disabled={step === 0 || busy}
-                      onClick={() => setStep(step - 1)}
+                      className={
+                        step === index
+                          ? "active"
+                          : index < step
+                            ? "done"
+                            : index <= furthestStep
+                              ? "ready"
+                              : "locked"
+                      }
+                      onClick={() => jumpStep(index)}
+                      key={label}
+                      disabled={index > furthestStep && index > step}
                     >
-                      {t.back}
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      {label}
                     </button>
-                    {step < 4 ? (
+                  ))}
+                </div>
+                <div className="progress">
+                  <span>{t.progress}</span>
+                  <i style={{ width: `${progress}%` }} />
+                </div>
+                {submission ? (
+                  <SuccessPanel
+                    locale={locale}
+                    form={form}
+                    submission={submission}
+                    toast={toast}
+                    copyId={copyRegistrationId}
+                    resetDraft={resetDraft}
+                  />
+                ) : (
+                  <>
+                    {step === 0 && (
+                      <IdentityStep
+                        form={form}
+                        locale={locale}
+                        errorField={stepError?.field}
+                        update={update}
+                      />
+                    )}
+                    {step === 1 && (
+                      <TrackStep
+                        form={form}
+                        locale={locale}
+                        errorField={stepError?.field}
+                        update={update}
+                      />
+                    )}
+                    {step === 2 && (
+                      <ContactStep
+                        form={form}
+                        locale={locale}
+                        errorField={stepError?.field}
+                        update={update}
+                      />
+                    )}
+                    {step === 3 && (
+                      <MaterialsStep
+                        form={form}
+                        locale={locale}
+                        previews={previews}
+                        errorField={stepError?.field}
+                        update={update}
+                        updateMaterial={updateMaterial}
+                        addMaterial={addMaterial}
+                        removeMaterial={removeMaterial}
+                      />
+                    )}
+                    {step === 4 && (
+                      <ConfirmStep
+                        form={form}
+                        locale={locale}
+                        errorField={stepError?.field}
+                        error={
+                          stepError?.field === "submit"
+                            ? stepError.message
+                            : ""
+                        }
+                        update={update}
+                        jumpTo={(target) => {
+                          setFurthestStep(4);
+                          setStep(target);
+                        }}
+                      />
+                    )}
+                    {stepError && stepError.field !== "submit" && (
+                      <p className="error form-error" role="alert">
+                        {stepError.message}
+                      </p>
+                    )}
+                    <div className="form-actions">
                       <button
                         type="button"
-                        className="primary-btn magnetic"
-                        onClick={goNext}
+                        className="ghost-btn"
+                        disabled={step === 0 || busy}
+                        onClick={() => setStep(step - 1)}
                       >
-                        {t.next}
+                        {t.back}
                       </button>
-                    ) : (
-                      <button className="primary-btn magnetic" disabled={busy}>
-                        {busy ? t.submitting : t.submit}
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
-            </form>
-          </div>
-        </section>
+                      {step < 4 ? (
+                        <button
+                          type="button"
+                          className="primary-btn magnetic"
+                          onClick={goNext}
+                        >
+                          {t.next}
+                        </button>
+                      ) : (
+                        <button
+                          className="primary-btn magnetic"
+                          disabled={busy}
+                        >
+                          {busy ? t.submitting : t.submit}
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </form>
+            </div>
+          </section>
 
-        <section id="faq" className="section faq scrub" data-scene="trails">
-          <div className="faq-title reveal">
-            <span>FAQ</span>
-            <p>{t.faqKicker}</p>
-            <h2>{t.faqTitle}</h2>
-            <label className="faq-search">
-              <input
-                value={faqQuery}
-                onChange={(e) => setFaqQuery(e.target.value)}
-                placeholder={t.faqSearch}
-              />
-            </label>
-          </div>
-          <div className="faq-list reveal">
-            {filteredFaqs.length === 0 && (
-              <p className="empty-faq">{t.noFaq}</p>
-            )}
-            {filteredFaqs.map((item, index) => {
-              const isOpen = openFaq === index;
-              return (
-                <article
-                  className={isOpen ? "faq-item open" : "faq-item"}
-                  key={item.question}
-                >
-                  <button
-                    type="button"
-                    aria-expanded={isOpen}
-                    onClick={() =>
-                      setOpenFaq((current) => (current === index ? -1 : index))
-                    }
+          <section id="faq" className="section faq scrub" data-scene="trails">
+            <div className="faq-title reveal">
+              <span>FAQ</span>
+              <p>{t.faqKicker}</p>
+              <h2>{t.faqTitle}</h2>
+              <label className="faq-search">
+                <input
+                  value={faqQuery}
+                  onChange={(e) => setFaqQuery(e.target.value)}
+                  placeholder={t.faqSearch}
+                />
+              </label>
+            </div>
+            <div className="faq-list reveal">
+              {filteredFaqs.length === 0 && (
+                <p className="empty-faq">{t.noFaq}</p>
+              )}
+              {filteredFaqs.map((item, index) => {
+                const isOpen = openFaq === index;
+                return (
+                  <article
+                    className={isOpen ? "faq-item open" : "faq-item"}
+                    key={item.question}
                   >
-                    {item.question}
-                    <i />
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      onClick={() =>
+                        setOpenFaq((current) =>
+                          current === index ? -1 : index,
+                        )
+                      }
+                    >
+                      {item.question}
+                      <i />
+                    </button>
+                    <div className="faq-answer" aria-hidden={!isOpen}>
+                      <p>{item.answer}</p>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+
+          <footer className="site-footer" data-scene="galaxy">
+            <div className="footer-glow" aria-hidden="true" />
+            <div className="footer-orbit" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="footer-main reveal">
+              <div className="footer-statement">
+                <p className="section-kicker">MIDNIGHT · GALAXY DRIFT</p>
+                <h2>{t.footerTitle}</h2>
+                <p>{t.heroSubtitle}</p>
+              </div>
+              <nav className="footer-links" aria-label="Footer navigation">
+                {navTargets.map((id, index) => (
+                  <button key={id} type="button" onClick={() => scrollTo(id)}>
+                    {t.nav[index]}
                   </button>
-                  <div className="faq-answer" aria-hidden={!isOpen}>
-                    <p>{item.answer}</p>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+                ))}
+              </nav>
+            </div>
+            <div className="footer-constellation">
+              <span>ACADEMY</span>
+              <span>AI LAB</span>
+              <span>YOUTH</span>
+              <span>GLOBAL</span>
+              <span>LIGHT</span>
+            </div>
+            <p className="copyright">{t.footerLine}</p>
+          </footer>
+        </div>
       </main>
       <div
         className={showBurst ? "success-burst show" : "success-burst"}
@@ -1226,36 +1289,6 @@ function App() {
         <strong>{t.successTitle}</strong>
         <span>Your light is rising</span>
       </div>
-      <footer className="site-footer" data-scene="galaxy">
-        <div className="footer-glow" aria-hidden="true" />
-        <div className="footer-orbit" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </div>
-        <div className="footer-main reveal">
-          <div className="footer-statement">
-            <p className="section-kicker">MIDNIGHT · GALAXY DRIFT</p>
-            <h2>{t.footerTitle}</h2>
-            <p>{t.heroSubtitle}</p>
-          </div>
-          <nav className="footer-links" aria-label="Footer navigation">
-            {navTargets.map((id, index) => (
-              <button key={id} type="button" onClick={() => scrollTo(id)}>
-                {t.nav[index]}
-              </button>
-            ))}
-          </nav>
-        </div>
-        <div className="footer-constellation">
-          <span>ACADEMY</span>
-          <span>AI LAB</span>
-          <span>YOUTH</span>
-          <span>GLOBAL</span>
-          <span>LIGHT</span>
-        </div>
-        <p className="copyright">{t.footerLine}</p>
-      </footer>
     </>
   );
 }
