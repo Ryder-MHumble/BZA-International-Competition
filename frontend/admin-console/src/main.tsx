@@ -47,7 +47,6 @@ type InfoBlock = { title: string; tone?: string; rows: (string | undefined)[] };
 type Feedback = { type: 'success' | 'error'; message: string } | null;
 
 const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-const TOKEN_KEY = 'ai-registration-admin-token';
 const statusSteps = ['submitted', 'reviewed', 'contacted'] as const;
 const panelOrder = ['overview', 'materials', 'review'] as const;
 const statusLabels: Record<Status, string> = { submitted: '已提交', reviewed: '已审核', contacted: '已联系' };
@@ -82,9 +81,9 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 function App() {
-  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY) || '');
+  const [token, setToken] = useState('');
   const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [status, setStatus] = useState<Status | 'all'>('all');
   const [query, setQuery] = useState('');
@@ -115,7 +114,6 @@ function App() {
       const res = await fetch(`${API}/api/v1/admin/session`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) });
       const payload = await res.json().catch(() => ({}));
       if (!res.ok || !payload.token) throw new Error(payload.message || '登录失败，请检查本地管理员账号。');
-      localStorage.setItem(TOKEN_KEY, payload.token);
       setToken(payload.token);
     } catch (error) {
       setLoginError(getErrorMessage(error, '登录失败，请确认后端服务已启动。'));
@@ -194,7 +192,6 @@ function App() {
   }
 
   function logout() {
-    localStorage.removeItem(TOKEN_KEY);
     setToken('');
     setDetail(null);
     setSelectedId('');

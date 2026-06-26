@@ -35,6 +35,7 @@ const LightField = lazy(() =>
 const API = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 const DRAFT_KEY = "iy-ai-future-summit-draft-v1";
 const localeKey = "iy-ai-future-summit-locale";
+const REGISTRATION_FORM_VISIBLE = false;
 
 const copy = {
   "zh-CN": {
@@ -58,7 +59,7 @@ const copy = {
     openingSkip: "跳过",
     openingPrev: "上一页",
     openingNext: "下一页",
-    openingEnter: "进入报名",
+    openingEnter: "进入首页",
     openingProgress: "开场导览",
     openingSlides: [
       {
@@ -74,7 +75,7 @@ const copy = {
       {
         kicker: "Dusk · Join Us",
         title: "准备好材料，走进这束光",
-        body: "使用结构化表单提交身份、学校、联系与项目链接，报名信息会进入本地审核与后续通知流程。",
+        body: "报名通道审计期间暂时隐藏，峰会介绍、核心活动与常见问题仍可正常浏览。",
       },
     ],
     primary: "立即报名",
@@ -167,7 +168,7 @@ const copy = {
       {
         kicker: "Dusk · Join Us",
         title: "Prepare your materials and step into the light",
-        body: "Submit profile, school, contact and project links through a structured form that supports review and follow-up communication.",
+        body: "The registration channel is temporarily hidden during audit. Summit information, activities and FAQs remain available.",
       },
     ],
     primary: "Register Now",
@@ -229,7 +230,10 @@ const copy = {
   },
 } as const;
 
-const navTargets = ["about", "activities", "register", "faq"] as const;
+const allNavTargets = ["about", "activities", "register", "faq"] as const;
+const navTargets = REGISTRATION_FORM_VISIBLE
+  ? allNavTargets
+  : allNavTargets.filter((id) => id !== "register");
 type Submission = {
   registrationId: string;
   status: string;
@@ -329,32 +333,6 @@ function validateStep(
   return null;
 }
 
-function loadDraft(): { form: FormState; step: number; locale: Locale } | null {
-  try {
-    const raw = localStorage.getItem(DRAFT_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<{
-      form: FormState;
-      step: number;
-      locale: Locale;
-    }>;
-    if (!parsed.form) return null;
-    return {
-      form: {
-        ...initialForm,
-        ...parsed.form,
-        documentType:
-          parsed.form.documentType ||
-          defaultDocumentType(parsed.form.nationalityRegion || "mainland"),
-      },
-      step: parsed.step || 0,
-      locale: parsed.locale || "zh-CN",
-    };
-  } catch {
-    return null;
-  }
-}
-
 function App() {
   const [locale, setLocale] = useState<Locale>(() =>
     localStorage.getItem(localeKey) === "en" ? "en" : "zh-CN",
@@ -446,21 +424,12 @@ function App() {
   }, [locale]);
 
   useEffect(() => {
-    const draft = loadDraft();
-    if (!draft) return;
-    setForm(draft.form);
-    setStep(Math.min(4, draft.step));
-    setFurthestStep(Math.min(4, draft.step));
-    setLocale(draft.locale);
+    localStorage.removeItem(DRAFT_KEY);
   }, []);
 
   useEffect(() => {
     localStorage.setItem(localeKey, locale);
-    const timer = window.setTimeout(() => {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step, locale }));
-    }, 220);
-    return () => window.clearTimeout(timer);
-  }, [form, step, locale]);
+  }, [locale]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -869,7 +838,7 @@ function App() {
               className={activeId === id ? "nav-link active" : "nav-link"}
               onClick={() => scrollTo(id)}
             >
-              {t.nav[index]}
+              {t.nav[allNavTargets.indexOf(id)]}
             </button>
           ))}
           <button type="button" className="lang-switch" onClick={switchLocale}>
@@ -877,13 +846,15 @@ function App() {
             <i />
             <span>{locale === "zh-CN" ? "EN" : "中"}</span>
           </button>
-          <button
-            className="nav-cta"
-            type="button"
-            onClick={() => scrollTo("register")}
-          >
-            {t.primary}
-          </button>
+          {REGISTRATION_FORM_VISIBLE && (
+            <button
+              className="nav-cta"
+              type="button"
+              onClick={() => scrollTo("register")}
+            >
+              {t.primary}
+            </button>
+          )}
         </div>
       </nav>
       <aside className="scroll-rail" aria-label="Page progress">
@@ -929,13 +900,15 @@ function App() {
               <span>{t.coOrganizers}</span>
             </div>
             <div className="hero-actions reveal">
-              <button
-                type="button"
-                className="primary-btn magnetic"
-                onClick={() => scrollTo("register")}
-              >
-                {t.primary}
-              </button>
+              {REGISTRATION_FORM_VISIBLE && (
+                <button
+                  type="button"
+                  className="primary-btn magnetic"
+                  onClick={() => scrollTo("register")}
+                >
+                  {t.primary}
+                </button>
+              )}
               <button
                 type="button"
                 className="ghost-btn magnetic"
@@ -1037,12 +1010,13 @@ function App() {
         </section>
 
         <div className="night-flow">
-          <section
-            id="register"
-            className="section registration scrub"
-            data-step={step}
-            data-scene="shaft"
-          >
+          {REGISTRATION_FORM_VISIBLE && (
+            <section
+              id="register"
+              className="section registration scrub"
+              data-step={step}
+              data-scene="shaft"
+            >
             <div className="form-shell reveal">
               <aside className="step-column" aria-label="Registration steps">
                 <p className="section-kicker">{t.formKicker}</p>
@@ -1201,7 +1175,8 @@ function App() {
                 )}
               </form>
             </div>
-          </section>
+            </section>
+          )}
 
           <section id="faq" className="section faq scrub" data-scene="trails">
             <div className="faq-title reveal">
@@ -1262,9 +1237,9 @@ function App() {
                 <p>{t.heroSubtitle}</p>
               </div>
               <nav className="footer-links" aria-label="Footer navigation">
-                {navTargets.map((id, index) => (
+                {navTargets.map((id) => (
                   <button key={id} type="button" onClick={() => scrollTo(id)}>
-                    {t.nav[index]}
+                    {t.nav[allNavTargets.indexOf(id)]}
                   </button>
                 ))}
               </nav>

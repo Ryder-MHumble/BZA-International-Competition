@@ -11,9 +11,17 @@ const CATALOG_PATH = resolve(DATA_DIR, 'catalog.json');
 const EMAIL_TEMPLATE_PATH = resolve(ROOT, 'templates/registration-success-email.txt');
 const PORT = Number(process.env.API_PORT || 3000);
 const HOST = process.env.HOST || '127.0.0.1';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || 'local-admin-token';
 const ADMIN_USER = process.env.ADMIN_USER || 'admin';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const DEFAULT_ALLOWED_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'];
+const ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS || DEFAULT_ALLOWED_ORIGINS.join(',')).split(',').map((origin) => origin.trim()).filter(Boolean);
+
+if (IS_PRODUCTION) {
+  const missing = ['ADMIN_TOKEN', 'ADMIN_USER', 'ADMIN_PASSWORD', 'CORS_ALLOWED_ORIGINS'].filter((key) => !process.env[key]);
+  if (missing.length) throw new Error(`Missing required production environment variables: ${missing.join(', ')}`);
+}
 
 const statusOrder = ['submitted', 'reviewed', 'contacted'];
 const allowedKinds = new Set(['project', 'video', 'code', 'portfolio', 'document', 'other']);
@@ -362,13 +370,22 @@ async function readBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8'));
 }
 
-function send(res, status, body, headers = {}) {
+function corsHeaders(req) {
+  const origin = req.headers.origin;
+  const allowedOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    Vary: 'Origin'
+  };
+}
+
+function send(req, res, status, body, headers = {}) {
   const payload = typeof body === 'string' ? body : JSON.stringify(body);
   res.writeHead(status, {
     'Content-Type': typeof body === 'string' ? 'text/plain; charset=utf-8' : 'application/json; charset=utf-8',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, OPTIONS',
+    ...corsHeaders(req),
     ...headers
   });
   res.end(payload);
@@ -376,41 +393,41 @@ function send(res, status, body, headers = {}) {
 
 export async function handleRequest(req, res) {
   try {
-    if (req.method === 'OPTIONS') return send(res, 204, '');
+    if (req.method === 'OPTIONS') return send(req, res, 204, '');
     const url = new URL(req.url, `http://${req.headers.host}`);
 
-    if (req.method === 'GET' && url.pathname === '/api/health') return send(res, 200, { ok: true });
-    if (req.method === 'GET' && url.pathname === '/api/v1/public/season/current') return send(res, 200, await readCatalog());
+    if (req.method === 'GET' && url.pathname === '/api/health') return send(req, res, 200, { ok: true });
+    if (req.method === 'GET' && url.pathname === '/api/v1/public/season/current') return send(req, res, 200, await readCatalog());
     if (req.method === 'POST' && url.pathname === '/api/v1/public/registrations') {
       const result = await createRegistration(await readBody(req));
-      return send(res, result.status, result.body);
+      return send(req, res, result.status, result.body);
     }
     if (req.method === 'POST' && url.pathname === '/api/v1/admin/session') {
       const payload = await readBody(req);
-      if (payload.username === ADMIN_USER && payload.password === ADMIN_PASSWORD) return send(res, 200, { token: ADMIN_TOKEN });
-      return send(res, 401, { code: 'INVALID_CREDENTIALS', message: 'Invalid admin credentials.' });
+      if (payload.username === ADMIN_USER && payload.password === ADMIN_PASSWORD) return send(req, res, 200, { token: ADMIN_TOKEN });
+      return send(req, res, 401, { code: 'INVALID_CREDENTIALS', message: 'Invalid admin credentials.' });
     }
 
-    if (url.pathname.startsWith('/api/v1/admin/') && !requireAdmin(req)) return send(res, 401, { code: 'UNAUTHORIZED', message: 'Admin token required.' });
+    if (url.pathname.startsWith('/api/v1/admin/') && !requireAdmin(req)) return send(req, res, 401, { code: 'UNAUTHORIZED', message: 'Admin token required.' });
 
-    if (req.method === 'GET' && url.pathname === '/api/v1/admin/registrations') return send(res, 200, await listRegistrations(url));
+    if (req.method === 'GET' && url.pathname === '/api/v1/admin/registrations') return send(req, res, 200, await listRegistrations(url));
     if (req.method === 'GET' && url.pathname === '/api/v1/admin/registrations/export.csv') {
-      return send(res, 200, await exportCsv(), { 'Content-Type': 'text/csv; charset=utf-8' });
+      return send(req, res, 200, await exportCsv(), { 'Content-Type': 'text/csv; charset=utf-8' });
     }
     const detailMatch = url.pathname.match(/^\/api\/v1\/admin\/registrations\/([^/]+)$/);
     if (req.method === 'GET' && detailMatch) {
       const detail = await getRegistration(detailMatch[1]);
-      return detail ? send(res, 200, detail) : send(res, 404, { code: 'NOT_FOUND', message: 'Registration not found.' });
+      return detail ? send(req, res, 200, detail) : send(req, res, 404, { code: 'NOT_FOUND', message: 'Registration not found.' });
     }
     const statusMatch = url.pathname.match(/^\/api\/v1\/admin\/registrations\/([^/]+)\/status$/);
     if (req.method === 'PATCH' && statusMatch) {
       const result = await updateStatus(statusMatch[1], await readBody(req));
-      return send(res, result.status, result.body);
+      return send(req, res, result.status, result.body);
     }
 
-    send(res, 404, { code: 'NOT_FOUND', message: 'Route not found.' });
+    send(req, res, 404, { code: 'NOT_FOUND', message: 'Route not found.' });
   } catch (error) {
-    send(res, 500, { code: 'SERVER_ERROR', message: error.message });
+    send(req, res, 500, { code: 'SERVER_ERROR', message: error.message });
   }
 }
 

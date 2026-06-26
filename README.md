@@ -33,6 +33,10 @@ Default URLs:
 - Admin console: `http://localhost:5174`
 - API: `http://localhost:3000`
 
+Production public domain:
+
+- `https://aiyf-summit.org.cn`
+
 Default local admin credentials:
 
 - Username: `admin`
